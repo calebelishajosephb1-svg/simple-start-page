@@ -9,6 +9,7 @@ export const KEYS = {
   AI_CHALLENGES: "iale_ai_challenges",
   LIBRARY: "iale_library",
   SESSION: "iale_session_memory",
+  DRILL_REVIEWS: "iale_drill_reviews",
   THEME: "iale_theme",
 } as const;
 
