@@ -9,6 +9,7 @@ export const KEYS = {
   AI_CHALLENGES: "iale_ai_challenges",
   LIBRARY: "iale_library",
   SESSION: "iale_session_memory",
+  DRILL_REVIEWS: "iale_drill_reviews",
   THEME: "iale_theme",
 } as const;
 
@@ -58,6 +59,11 @@ export interface Mistake {
   category: string;
   challengeId: string;
   details: string;
+}
+export interface DrillReview {
+  category: string;
+  box: number;
+  reviewedAt: number;
 }
 export interface SerializedChallenge {
   id: string;
@@ -143,6 +149,17 @@ export const Storage = {
   getAllMistakes() {
     return read<Mistake[]>(KEYS.MISTAKE_LOG, []);
   },
+  getDrillReviews(): Record<string, DrillReview> {
+    return read<Record<string, DrillReview>>(KEYS.DRILL_REVIEWS, {});
+  },
+  recordDrillReview(category: string, box: number) {
+    const all = read<Record<string, DrillReview>>(KEYS.DRILL_REVIEWS, {});
+    all[category] = { category, box, reviewedAt: Date.now() };
+    const ok = write(KEYS.DRILL_REVIEWS, all);
+    emit("iale-drill-reviewed", { category, box });
+    return { ok };
+  },
+
   getMistakeSummary() {
     const counts = new Map<string, number>();
     for (const m of read<Mistake[]>(KEYS.MISTAKE_LOG, []))
@@ -243,6 +260,7 @@ export const Storage = {
       KEYS.AI_CHALLENGES,
       KEYS.LIBRARY,
       KEYS.SESSION,
+      KEYS.DRILL_REVIEWS,
     ])
       window.localStorage.removeItem(key);
     emit("iale-data-cleared");

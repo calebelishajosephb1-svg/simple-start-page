@@ -9,6 +9,9 @@ import {
   Moon,
   Bug,
   BarChart3,
+  Layers,
+  Swords,
+  GitCompare,
   Sun,
   Workflow,
 } from "lucide-react";
@@ -18,6 +21,9 @@ import { MutationLab } from "@/components/modules/MutationLab";
 import { Debugger } from "@/components/modules/Debugger";
 import { Analytics } from "@/components/modules/Analytics";
 import { NFALab } from "@/components/modules/NFALab";
+import { MinimizeLab } from "@/components/modules/MinimizeLab";
+import { PumpingGame } from "@/components/modules/PumpingGame";
+import { CompareLab } from "@/components/modules/CompareLab";
 import { TutorPanel } from "@/components/TutorPanel";
 import { useTheme } from "@/lib/theme";
 import { Storage } from "@/lib/storage";
@@ -47,7 +53,16 @@ export const Route = createFileRoute("/")({
   component: Index,
 });
 
-type TabId = "discovery" | "mutation" | "debugger" | "analytics" | "nfa" | "converter";
+type TabId =
+  | "discovery"
+  | "mutation"
+  | "debugger"
+  | "analytics"
+  | "nfa"
+  | "converter"
+  | "minimizer"
+  | "pumping"
+  | "compare";
 
 const TABS: { id: TabId; label: string; icon: typeof Compass }[] = [
   { id: "discovery", label: "Discovery", icon: Compass },
@@ -55,6 +70,9 @@ const TABS: { id: TabId; label: string; icon: typeof Compass }[] = [
   { id: "debugger", label: "Debugger", icon: Bug },
   { id: "nfa", label: "NFA Lab", icon: Workflow },
   { id: "converter", label: "Converter", icon: ArrowRightLeft },
+  { id: "minimizer", label: "Minimizer", icon: Layers },
+  { id: "compare", label: "Compare", icon: GitCompare },
+  { id: "pumping", label: "Pumping Lemma", icon: Swords },
   { id: "analytics", label: "Analytics", icon: BarChart3 },
 ];
 
@@ -164,6 +182,15 @@ function Index() {
           </ModulePane>
           <ModulePane show={tab === "converter"}>
             <Converter active={tab === "converter"} onContext={bind("converter")} />
+          </ModulePane>
+          <ModulePane show={tab === "minimizer"}>
+            <MinimizeLab active={tab === "minimizer"} onContext={bind("minimizer")} />
+          </ModulePane>
+          <ModulePane show={tab === "compare"}>
+            <CompareLab active={tab === "compare"} onContext={bind("compare")} />
+          </ModulePane>
+          <ModulePane show={tab === "pumping"}>
+            <PumpingGame active={tab === "pumping"} onContext={bind("pumping")} />
           </ModulePane>
           <ModulePane show={tab === "analytics"}>
             <Analytics active={tab === "analytics"} onContext={bind("analytics")} onGoto={goto} />
