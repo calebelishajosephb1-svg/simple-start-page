@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { FIXED_CHALLENGES } from "@/lib/engine/challenges";
 import { detectMisconceptions } from "@/lib/engine/algorithms";
 import { Storage } from "@/lib/storage";
+import { buildRecommendations } from "@/lib/engine/recommendations";
 import { buildAnalyticsContext } from "@/lib/tutor/context";
 
 const CATEGORY_LABEL: Record<string, string> = {
