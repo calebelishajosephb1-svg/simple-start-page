@@ -33,6 +33,8 @@ export type TutorAction =
   | { type: "readAloud"; text: string }
   | { type: "sketch"; title: string; spec: string }
   | { type: "exportNotes" }
+  | { type: "describeCanvas" }
+  | { type: "showRecommendations" }
   | { type: "challenge"; name: string; regex: string; difficulty: string; alphabet: string[] };
 
 const TAG = /<IALE_([A-Z_]+)([^>]*)\/>/g;
