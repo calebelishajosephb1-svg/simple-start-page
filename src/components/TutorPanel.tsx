@@ -380,9 +380,18 @@ export function TutorPanel({
           <button
             className="tool-btn"
             title="Read the last reply aloud"
+            aria-label="Read the last reply aloud"
             onClick={() => speak(stripThink(messages[messages.length - 1]?.content ?? ""))}
           >
             <Volume2 size={15} />
+          </button>
+          <button
+            className="tool-btn"
+            title="Describe the canvas aloud"
+            aria-label="Describe the canvas aloud"
+            onClick={() => describeCanvas.current()}
+          >
+            <Ear size={15} />
           </button>
           <button
             className="tool-btn"
