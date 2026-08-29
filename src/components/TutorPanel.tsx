@@ -225,6 +225,8 @@ export function TutorPanel({
   const [error, setError] = useState<string | null>(null);
   const [chips, setChips] = useState<{ tab: string; label: string }[]>([]);
   const [sketch, setSketch] = useState<Sketch | null>(null);
+  const [recs, setRecs] = useState<Recommendation[]>([]);
+  const [narration, setNarration] = useState<string | null>(null);
   const scroller = useRef<HTMLDivElement | null>(null);
   const composer = useRef<HTMLInputElement | null>(null);
   /** Converter reveal tracking — feeds the sequencing guard. */
@@ -233,9 +235,19 @@ export function TutorPanel({
   useEffect(() => {
     setSettings(loadSettings());
     const opener = recallOpener();
-    if (opener)
+    if (opener) {
       setMessages((m) => (m.length === 1 ? [...m, { role: "assistant", content: opener }] : m));
+      setRecs(buildRecommendations(2));
+    }
   }, []);
+
+  /** Speak (and show) a description of what is currently drawn on the canvas. */
+  const describeCanvas = useRef(() => {});
+  describeCanvas.current = () => {
+    const text = narrateContext(getContext());
+    setNarration(text);
+    speak(text);
+  };
 
   useEffect(() => {
     const onReveal = (e: Event) => {
