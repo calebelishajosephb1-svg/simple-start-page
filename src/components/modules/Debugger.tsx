@@ -169,10 +169,23 @@ export function Debugger({
         toast(`"${action.value || "ε"}" → your machine ${r.accepted ? "accepts" : "rejects"}`);
       }
     };
+    // A recommendation card in the tutor chat asks the Debugger to open a drill.
+    const onLoad = (e: Event) => {
+      const id = (e as CustomEvent<{ id: string }>).detail?.id;
+      const ch = FIXED_CHALLENGES.find((c) => c.id === id);
+      if (ch) {
+        load(ch);
+        toast(`Loaded drill: ${ch.name}`);
+      }
+    };
     window.addEventListener("iale-tutor-action", handler);
-    return () => window.removeEventListener("iale-tutor-action", handler);
+    window.addEventListener("iale-load-challenge", onLoad);
+    return () => {
+      window.removeEventListener("iale-tutor-action", handler);
+      window.removeEventListener("iale-load-challenge", onLoad);
+    };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [active, dfa, hint]);
+  }, [active, dfa, hint, load]);
 
   const hintTexts = hint ? [hint.level1, hint.level2, hint.level3] : [];
 
