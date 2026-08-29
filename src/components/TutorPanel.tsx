@@ -323,18 +323,40 @@ export function TutorPanel({
           [...c.filter((x) => x.tab !== a.tab), { tab: a.tab, label: a.label }].slice(-3),
         );
       if (a.type === "readAloud") speak(a.text);
+      if (a.type === "describeCanvas") describeCanvas.current();
+      if (a.type === "showRecommendations") setRecs(buildRecommendations(3));
       if (a.type === "sketch") setSketch(parseSketch(a.spec, a.title));
       if (a.type === "exportNotes")
         exportNotes([...messages, { role: "assistant", content: finalText }]);
     }
   }
 
+  /**
+   * Study sheet export.
+   *
+   * Every assistant line is re-checked against the SAME reveal boundary that
+   * was live during the session, so a note sheet from an unsolved exercise can
+   * never hand the student, after the fact, something the tutor declined to say
+   * out loud at the time.
+   */
   function exportNotes(thread: ChatMessage[]) {
+    const ctx = { moduleId, finalVisible: reveal.current[moduleId] ?? true };
+    let redacted = 0;
     const body = thread
-      .map((m) => `${m.role === "user" ? "You" : "Socratic"}: ${stripThink(m.content)}`)
+      .map((m) => {
+        const text = stripThink(m.content);
+        if (m.role !== "assistant") return `You: ${text}`;
+        const verdict = checkReply(text, ctx);
+        if (verdict.allowed) return `Socratic: ${text}`;
+        redacted++;
+        return "Socratic: [withheld — this exercise is still open, so the note sheet keeps the same boundary the session did]";
+      })
       .join("\n\n");
+    const footer = redacted
+      ? `\n\n(${redacted} passage${redacted === 1 ? "" : "s"} withheld while this exercise is unsolved.)\n`
+      : "\n";
     const url = URL.createObjectURL(
-      new Blob([`IALE session notes — ${moduleId}\n\n${body}\n`], { type: "text/plain" }),
+      new Blob([`IALE session notes — ${moduleId}\n\n${body}\n${footer}`], { type: "text/plain" }),
     );
     const a = document.createElement("a");
     a.href = url;
