@@ -133,6 +133,8 @@ export function parseTutorActions(text: string): { cleanText: string; actions: T
     "linkConcept",
     "readAloud",
     "sketch",
+    "describeCanvas",
+    "showRecommendations",
   ]);
   const budgeted: TutorAction[] = [];
   let spent = 0;
