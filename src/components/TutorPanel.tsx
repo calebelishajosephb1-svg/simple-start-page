@@ -509,7 +509,75 @@ export function TutorPanel({
         )}
       </div>
 
+      {narration && (
+        <div className="lab-card" style={{ margin: "0 10px 8px" }} aria-live="polite">
+          <div className="flex items-center gap-2">
+            <p className="section-label" style={{ margin: 0 }}>
+              Canvas description
+            </p>
+            <button
+              className="tool-btn ml-auto"
+              title="Dismiss description"
+              aria-label="Dismiss canvas description"
+              onClick={() => setNarration(null)}
+            >
+              <X size={13} />
+            </button>
+          </div>
+          <p className="text-[11.5px] leading-relaxed" style={{ color: "var(--ink-muted)" }}>
+            {narration}
+          </p>
+        </div>
+      )}
+
+      {recs.length > 0 && (
+        <div className="lab-card" style={{ margin: "0 10px 8px" }}>
+          <div className="flex items-center gap-2">
+            <p className="section-label" style={{ margin: 0 }}>
+              Recommended drills
+            </p>
+            <button
+              className="tool-btn ml-auto"
+              title="Dismiss recommendations"
+              aria-label="Dismiss recommendations"
+              onClick={() => setRecs([])}
+            >
+              <X size={13} />
+            </button>
+          </div>
+          <div className="flex flex-col gap-1.5">
+            {recs.map((r) => (
+              <button
+                key={r.challenge.id}
+                className="btn-ghost text-left"
+                style={{ display: "block", width: "100%" }}
+                onClick={() => {
+                  window.dispatchEvent(
+                    new CustomEvent("iale-load-challenge", { detail: { id: r.challenge.id } }),
+                  );
+                  window.dispatchEvent(
+                    new CustomEvent("iale-tutor-action", {
+                      detail: { type: "gotoTab", tab: "debugger" },
+                    }),
+                  );
+                  setRecs([]);
+                }}
+              >
+                <span className="text-[12px] font-semibold">{r.challenge.name}</span>
+                <span
+                  className="block text-[11px] leading-snug"
+                  style={{ color: "var(--ink-muted)" }}
+                >
+                  {r.reason}
+                </span>
+              </button>
+            ))}
+          </div>
+        </div>
+      )}
+
       {sketch && <ScratchDiagram sketch={sketch} onClear={() => setSketch(null)} />}
+
 
       {chips.length > 0 && (
         <div className="flex flex-wrap gap-1" style={{ padding: "0 10px 8px" }}>
