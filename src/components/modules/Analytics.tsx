@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { FIXED_CHALLENGES } from "@/lib/engine/challenges";
 import { detectMisconceptions } from "@/lib/engine/algorithms";
 import { Storage } from "@/lib/storage";
+import { buildRecommendations } from "@/lib/engine/recommendations";
 import { buildAnalyticsContext } from "@/lib/tutor/context";
 
 const CATEGORY_LABEL: Record<string, string> = {
@@ -35,21 +36,7 @@ export function Analytics({
   const solved = Storage.countSolvedUnique();
   const mistakes = Storage.getMistakeSummary().data;
   const max = Math.max(1, ...mistakes.map((m) => m.count));
-  const solvedIds = new Set(
-    Object.keys(Storage.getStats().solves).map((k) => k.split(":").slice(1).join(":")),
-  );
-  const REC_REASON: Record<string, string> = {
-    transition: "Missing transitions keep recurring — drill a small machine to completeness.",
-    accept: "Accepting status is tripping you up — practice where runs must end.",
-    crash: "Your machines crash mid-string — build total transition functions.",
-    sink: "You're missing sink/trap states — learn when to give up cleanly.",
-    hint: "Lots of hints used — try an easier language to rebuild confidence.",
-  };
-  const unsolved = FIXED_CHALLENGES.filter((c) => !solvedIds.has(c.id));
-  const recs = mistakes.slice(0, 3).map((m, i) => ({
-    reason: REC_REASON[m.category] ?? "Targeted practice based on your mistake log.",
-    challenge: unsolved[i] ?? FIXED_CHALLENGES[i] ?? FIXED_CHALLENGES[0]!,
-  }));
+  const recs = buildRecommendations(3);
   const misconceptions = detectMisconceptions(Storage.getAllMistakes());
 
   useEffect(() => {

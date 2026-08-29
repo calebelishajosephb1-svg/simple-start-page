@@ -3,6 +3,7 @@ import ReactMarkdown from "react-markdown";
 import {
   Bot,
   Download,
+  Ear,
   ExternalLink,
   Eye,
   EyeOff,
@@ -24,6 +25,8 @@ import {
 } from "@/lib/tutor/byok";
 import { checkReply } from "@/lib/tutor/guard";
 import { dispatchTutorActions, parseTutorActions } from "@/lib/tutor/actions";
+import { narrateContext } from "@/lib/tutor/narrate";
+import { buildRecommendations, type Recommendation } from "@/lib/engine/recommendations";
 import { Storage } from "@/lib/storage";
 
 const GREETING =
@@ -225,6 +228,8 @@ export function TutorPanel({
   const [error, setError] = useState<string | null>(null);
   const [chips, setChips] = useState<{ tab: string; label: string }[]>([]);
   const [sketch, setSketch] = useState<Sketch | null>(null);
+  const [recs, setRecs] = useState<Recommendation[]>([]);
+  const [narration, setNarration] = useState<string | null>(null);
   const scroller = useRef<HTMLDivElement | null>(null);
   const composer = useRef<HTMLInputElement | null>(null);
   /** Converter reveal tracking — feeds the sequencing guard. */
@@ -233,9 +238,19 @@ export function TutorPanel({
   useEffect(() => {
     setSettings(loadSettings());
     const opener = recallOpener();
-    if (opener)
+    if (opener) {
       setMessages((m) => (m.length === 1 ? [...m, { role: "assistant", content: opener }] : m));
+      setRecs(buildRecommendations(2));
+    }
   }, []);
+
+  /** Speak (and show) a description of what is currently drawn on the canvas. */
+  const describeCanvas = useRef(() => {});
+  describeCanvas.current = () => {
+    const text = narrateContext(getContext());
+    setNarration(text);
+    speak(text);
+  };
 
   useEffect(() => {
     const onReveal = (e: Event) => {
@@ -309,18 +324,40 @@ export function TutorPanel({
           [...c.filter((x) => x.tab !== a.tab), { tab: a.tab, label: a.label }].slice(-3),
         );
       if (a.type === "readAloud") speak(a.text);
+      if (a.type === "describeCanvas") describeCanvas.current();
+      if (a.type === "showRecommendations") setRecs(buildRecommendations(3));
       if (a.type === "sketch") setSketch(parseSketch(a.spec, a.title));
       if (a.type === "exportNotes")
         exportNotes([...messages, { role: "assistant", content: finalText }]);
     }
   }
 
+  /**
+   * Study sheet export.
+   *
+   * Every assistant line is re-checked against the SAME reveal boundary that
+   * was live during the session, so a note sheet from an unsolved exercise can
+   * never hand the student, after the fact, something the tutor declined to say
+   * out loud at the time.
+   */
   function exportNotes(thread: ChatMessage[]) {
+    const ctx = { moduleId, finalVisible: reveal.current[moduleId] ?? true };
+    let redacted = 0;
     const body = thread
-      .map((m) => `${m.role === "user" ? "You" : "Socratic"}: ${stripThink(m.content)}`)
+      .map((m) => {
+        const text = stripThink(m.content);
+        if (m.role !== "assistant") return `You: ${text}`;
+        const verdict = checkReply(text, ctx);
+        if (verdict.allowed) return `Socratic: ${text}`;
+        redacted++;
+        return "Socratic: [withheld — this exercise is still open, so the note sheet keeps the same boundary the session did]";
+      })
       .join("\n\n");
+    const footer = redacted
+      ? `\n\n(${redacted} passage${redacted === 1 ? "" : "s"} withheld while this exercise is unsolved.)\n`
+      : "\n";
     const url = URL.createObjectURL(
-      new Blob([`IALE session notes — ${moduleId}\n\n${body}\n`], { type: "text/plain" }),
+      new Blob([`IALE session notes — ${moduleId}\n\n${body}\n${footer}`], { type: "text/plain" }),
     );
     const a = document.createElement("a");
     a.href = url;
@@ -344,9 +381,18 @@ export function TutorPanel({
           <button
             className="tool-btn"
             title="Read the last reply aloud"
+            aria-label="Read the last reply aloud"
             onClick={() => speak(stripThink(messages[messages.length - 1]?.content ?? ""))}
           >
             <Volume2 size={15} />
+          </button>
+          <button
+            className="tool-btn"
+            title="Describe the canvas aloud"
+            aria-label="Describe the canvas aloud"
+            onClick={() => describeCanvas.current()}
+          >
+            <Ear size={15} />
           </button>
           <button
             className="tool-btn"
@@ -463,7 +509,75 @@ export function TutorPanel({
         )}
       </div>
 
+      {narration && (
+        <div className="lab-card" style={{ margin: "0 10px 8px" }} aria-live="polite">
+          <div className="flex items-center gap-2">
+            <p className="section-label" style={{ margin: 0 }}>
+              Canvas description
+            </p>
+            <button
+              className="tool-btn ml-auto"
+              title="Dismiss description"
+              aria-label="Dismiss canvas description"
+              onClick={() => setNarration(null)}
+            >
+              <X size={13} />
+            </button>
+          </div>
+          <p className="text-[11.5px] leading-relaxed" style={{ color: "var(--ink-muted)" }}>
+            {narration}
+          </p>
+        </div>
+      )}
+
+      {recs.length > 0 && (
+        <div className="lab-card" style={{ margin: "0 10px 8px" }}>
+          <div className="flex items-center gap-2">
+            <p className="section-label" style={{ margin: 0 }}>
+              Recommended drills
+            </p>
+            <button
+              className="tool-btn ml-auto"
+              title="Dismiss recommendations"
+              aria-label="Dismiss recommendations"
+              onClick={() => setRecs([])}
+            >
+              <X size={13} />
+            </button>
+          </div>
+          <div className="flex flex-col gap-1.5">
+            {recs.map((r) => (
+              <button
+                key={r.challenge.id}
+                className="btn-ghost text-left"
+                style={{ display: "block", width: "100%" }}
+                onClick={() => {
+                  window.dispatchEvent(
+                    new CustomEvent("iale-load-challenge", { detail: { id: r.challenge.id } }),
+                  );
+                  window.dispatchEvent(
+                    new CustomEvent("iale-tutor-action", {
+                      detail: { type: "gotoTab", tab: "debugger" },
+                    }),
+                  );
+                  setRecs([]);
+                }}
+              >
+                <span className="text-[12px] font-semibold">{r.challenge.name}</span>
+                <span
+                  className="block text-[11px] leading-snug"
+                  style={{ color: "var(--ink-muted)" }}
+                >
+                  {r.reason}
+                </span>
+              </button>
+            ))}
+          </div>
+        </div>
+      )}
+
       {sketch && <ScratchDiagram sketch={sketch} onClear={() => setSketch(null)} />}
+
 
       {chips.length > 0 && (
         <div className="flex flex-wrap gap-1" style={{ padding: "0 10px 8px" }}>
