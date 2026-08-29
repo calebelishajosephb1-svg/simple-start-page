@@ -24,15 +24,34 @@ export interface GuardContext {
 }
 
 /** Modules where the machine is fully on-screen: only sequencing is protected. */
-const PUBLIC_TIER = new Set(["converter", "nfa", "mutation"]);
+const PUBLIC_TIER = new Set(["converter", "nfa", "mutation", "minimizer", "compare"]);
 
 export const SEQUENCE_FALLBACK =
   "That's the step you're about to derive — try it first. Name the in-edges and out-edges involved, take a swing at the substitution, and I'll tell you whether it holds.";
+
+/** Pumping game: the winning exponent and a ready-made witness string are the answer. */
+const PUMPING_LEAK: RegExp[] = [
+  /\bi\s*=\s*\d/i,
+  /\b(?:pick|choose|take|try|use)\s+i\s*(?:=|of|as)?\s*\d/i,
+  /\bpump(?:ing)?\s+(?:it\s+)?(?:down|up)\b/i,
+  /\bxy\s*\^?\s*\d\s*z\b/i,
+  /\bs\s*=\s*[a-z01]{2,}/i,
+];
+
+export const PUMPING_FALLBACK =
+  "That's the move you're meant to make. Instead: what quantity does this language count, what does |xy| ≤ p force y to be made of, and what happens to that count when y repeats?";
 
 export function checkReply(
   reply: string,
   ctx: GuardContext,
 ): { allowed: boolean; reason?: string; fallback: string } {
+  if (ctx.moduleId === "pumping") {
+    for (const p of PUMPING_LEAK)
+      if (p.test(reply))
+        return { allowed: false, reason: "pumping answer reveal", fallback: PUMPING_FALLBACK };
+    return { allowed: true, fallback: PUMPING_FALLBACK };
+  }
+
   if (PUBLIC_TIER.has(ctx.moduleId)) {
     // Nothing is hidden here — the only leak is pre-empting an unrevealed step.
     if (ctx.finalVisible === false && REGEX_REVEAL.test(reply)) {
