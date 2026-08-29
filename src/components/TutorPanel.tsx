@@ -24,6 +24,8 @@ import {
 } from "@/lib/tutor/byok";
 import { checkReply } from "@/lib/tutor/guard";
 import { dispatchTutorActions, parseTutorActions } from "@/lib/tutor/actions";
+import { narrateContext } from "@/lib/tutor/narrate";
+import { buildRecommendations, type Recommendation } from "@/lib/engine/recommendations";
 import { Storage } from "@/lib/storage";
 
 const GREETING =
