@@ -260,6 +260,7 @@ export const Storage = {
       KEYS.AI_CHALLENGES,
       KEYS.LIBRARY,
       KEYS.SESSION,
+      KEYS.DRILL_REVIEWS,
     ])
       window.localStorage.removeItem(key);
     emit("iale-data-cleared");
