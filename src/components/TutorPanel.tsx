@@ -3,6 +3,7 @@ import ReactMarkdown from "react-markdown";
 import {
   Bot,
   Download,
+  Ear,
   ExternalLink,
   Eye,
   EyeOff,
