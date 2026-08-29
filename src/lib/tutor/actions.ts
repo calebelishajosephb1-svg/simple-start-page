@@ -89,6 +89,10 @@ export const ACTION_REGISTRY: Record<string, Builder> = {
       : null,
   READ_ALOUD_SUMMARY: (a) => (a["text"] ? { type: "readAloud", text: a["text"] } : null),
   EXPORT_SESSION_NOTES: () => ({ type: "exportNotes" }),
+  // Accessibility: narrates only what is already drawn on the canvas.
+  DESCRIBE_CANVAS: () => ({ type: "describeCanvas" }),
+  // Motivation: re-surfaces the Analytics recommendation cards inside the chat.
+  SHOW_RECOMMENDATIONS: () => ({ type: "showRecommendations" }),
   // Scratch sketch: illustrative dummy machine only (tier: PUBLIC by
   // construction — it never receives the student's real machine).
   SKETCH: (a) =>
