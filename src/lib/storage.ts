@@ -60,6 +60,11 @@ export interface Mistake {
   challengeId: string;
   details: string;
 }
+export interface DrillReview {
+  category: string;
+  box: number;
+  reviewedAt: number;
+}
 export interface SerializedChallenge {
   id: string;
   name: string;
