@@ -149,6 +149,17 @@ export const Storage = {
   getAllMistakes() {
     return read<Mistake[]>(KEYS.MISTAKE_LOG, []);
   },
+  getDrillReviews(): Record<string, DrillReview> {
+    return read<Record<string, DrillReview>>(KEYS.DRILL_REVIEWS, {});
+  },
+  recordDrillReview(category: string, box: number) {
+    const all = read<Record<string, DrillReview>>(KEYS.DRILL_REVIEWS, {});
+    all[category] = { category, box, reviewedAt: Date.now() };
+    const ok = write(KEYS.DRILL_REVIEWS, all);
+    emit("iale-drill-reviewed", { category, box });
+    return { ok };
+  },
+
   getMistakeSummary() {
     const counts = new Map<string, number>();
     for (const m of read<Mistake[]>(KEYS.MISTAKE_LOG, []))
