@@ -14,7 +14,7 @@ export function narrateContext(context: string): string {
   if (!m) return "The canvas is empty — there is nothing to describe yet.";
 
   const states = split(m[1] ?? "");
-  const edges = m[2] === "none" ? [] : split(m[3] === undefined ? "" : (m[2] ?? ""), ";");
+  const edges = m[2] === "none" ? [] : split(m[2] ?? "", ";");
   const alphabet = split(m[3] ?? "");
 
   const start = states.find((s) => s.includes("(start)"));
