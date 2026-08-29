@@ -44,7 +44,11 @@ export function CompareLab({ active, onContext }: Props) {
   const dfaA = useMemo(() => machineToDFA(a.machine, ALPHABET), [a.machine]);
   const dfaB = useMemo(() => machineToDFA(b.machine, ALPHABET), [b.machine]);
 
-  const product = useMemo(() => productConstruction(dfaA, dfaB, op), [dfaA, dfaB, op]);
+  const activeOp: ProductOp = tool === "equivalence" ? "symmetric" : op;
+  const product = useMemo(
+    () => productConstruction(dfaA, dfaB, activeOp),
+    [dfaA, dfaB, activeOp],
+  );
   const productMachine = useMemo(
     () => layoutMachine(dfaToMachine(product.dfa)),
     [product],
@@ -274,13 +278,23 @@ export function CompareLab({ active, onContext }: Props) {
             <div className="section-label px-3 py-2">
               {tool === "product" ? OP_LABEL[op] : "A △ B (equivalence witness graph)"}
             </div>
-            <DFACanvas
-              machine={productMachine}
-              alphabet={ALPHABET}
-              editable={false}
-              mode="pointer"
-              exportName="product"
-            />
+            {tool === "product" || checked ? (
+              <DFACanvas
+                machine={productMachine}
+                alphabet={ALPHABET}
+                editable={false}
+                mode="pointer"
+                exportName="product"
+              />
+            ) : (
+              <div
+                className="canvas-surface flex items-center justify-center px-6 text-center text-xs"
+                style={{ color: "var(--ink-disabled)" }}
+              >
+                Predict a string that might separate A and B, then run the check to see the witness
+                graph.
+              </div>
+            )}
           </div>
         </div>
       </section>
